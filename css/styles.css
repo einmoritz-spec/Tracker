@@ -1,0 +1,403 @@
+/* ---------------------------------------------------
+   TRACKER — Design-Tokens
+   Alle Farben ausschließlich als CSS-Custom-Properties, damit eine künftige
+   13-settings.js sie zur Laufzeit überschreiben kann (siehe applyThemeVars()
+   in 02-state-theme.js), ohne dass irgendwo Farbwerte hart im Markup/JS
+   stehen. Defaults an der "Drip"-App angelehnt (dunkles Lila, mintiger
+   Hintergrund, oranger Akzent, dezentes Pastellrot für Periodentage).
+--------------------------------------------------- */
+:root{
+  --color-header-bg: #3C2E6B;
+  --color-header-text: #FFFFFF;
+  --color-brand: #5FD6C0;
+
+  --color-bg: #E9F2EA;
+  --color-surface: #FFFFFF;
+
+  --color-accent: #F0923D;
+  --color-text-heading: #2E2360;
+  --color-text-day: #4B4B55;
+  --color-text-muted: #8C8C99;
+
+  --color-period-bg: #F5D0CB;
+  --color-period-text: #7A3B34;
+
+  --color-selecting-outline: #F0923D;
+
+  --color-nav-inactive: #9C9CA8;
+
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*{ box-sizing: border-box; }
+html, body{
+  height: 100%;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+body{
+  font-family: var(--font-family);
+  background: var(--color-bg);
+  color: var(--color-text-day);
+  overscroll-behavior-y: contain;
+}
+button{
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app{
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ---------- Header ---------- */
+.app-header{
+  flex: 0 0 auto;
+  padding: calc(14px + var(--safe-top)) 20px 16px;
+  background: var(--color-header-bg);
+}
+.app-title{
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-brand);
+  letter-spacing: -0.02em;
+}
+.app-header-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-icon-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--color-header-text);
+  opacity: 0.85;
+}
+.header-icon-btn svg{ width: 22px; height: 22px; }
+
+.back-header{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.back-header .app-title{ flex: 1; text-align: center; font-size: 18px; }
+.back-btn{
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-header-text);
+  font-size: 20px;
+}
+.header-spacer{ width: 32px; }
+
+/* ---------- Jahres-Pillenleiste ---------- */
+.year-nav{
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border-bottom: 1px solid rgba(46, 35, 96, 0.08);
+}
+.year-nav.is-empty{
+  display: none;
+}
+.year-pill{
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  background: var(--color-bg);
+}
+.year-pill.is-current-year{
+  background: var(--color-accent);
+  color: #FFFFFF;
+}
+
+/* ---------- Kalender (scrollbarer Bereich) ---------- */
+.calendar-scroll{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 24px;
+}
+.calendar-sentinel-top,
+.calendar-sentinel-bottom{
+  height: 1px;
+}
+
+.month-block{
+  padding: 28px 16px 8px;
+}
+.month-title{
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-text-heading);
+}
+.weekday-row{
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 12px;
+}
+.weekday-label{
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+.days-grid{
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 14px;
+}
+.day-cell{
+  justify-self: center;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 17px;
+  color: var(--color-text-day);
+}
+.day-cell.empty{
+  cursor: default;
+}
+.day-cell.is-today{
+  font-weight: 800;
+  color: var(--color-text-heading);
+  box-shadow: inset 0 0 0 2px var(--color-text-heading);
+}
+.day-cell.has-period{
+  background: var(--color-period-bg);
+  color: var(--color-period-text);
+  font-weight: 700;
+}
+.day-cell.has-period.is-today{
+  box-shadow: inset 0 0 0 2px var(--color-period-text);
+}
+.day-cell.is-selecting{
+  box-shadow: inset 0 0 0 2px var(--color-selecting-outline);
+  font-weight: 700;
+  color: var(--color-selecting-outline);
+}
+
+/* ---------- Platzhalter (Chart/Stats) ---------- */
+.placeholder-content{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px;
+  gap: 8px;
+}
+.placeholder-title{
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text-heading);
+}
+.placeholder-text{
+  margin: 0;
+  max-width: 320px;
+  font-size: 15px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ---------- Stats ---------- */
+.stats-scroll{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 28px 20px 32px;
+}
+.stats-hero{
+  text-align: center;
+  margin-bottom: 24px;
+}
+.stats-hero-day{
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--color-text-heading);
+}
+.stats-hero-phase{
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+.stats-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-card{
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+.stat-card-value{
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text-heading);
+}
+.stat-card-label{
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.stats-section{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.stats-section-title{
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+.stats-section-value{
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+}
+.stats-note{
+  margin: 16px 4px 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ---------- Import ---------- */
+.import-scroll{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 20px 32px;
+}
+.file-picker-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+.import-error{
+  margin-top: 12px;
+  color: #B3413A;
+  font-size: 13px;
+  min-height: 18px;
+}
+.import-summary{
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.import-list{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.import-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+.import-row.is-disabled{
+  opacity: 0.5;
+}
+.import-row-dates{
+  flex: 1 1 auto;
+  font-weight: 700;
+  color: var(--color-text-heading);
+}
+.import-row-length{
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.import-row-note{
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--color-accent);
+}
+.import-confirm-btn{
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--color-header-bg);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* ---------- Bottom-Nav ---------- */
+.bottom-nav{
+  flex: 0 0 auto;
+  display: flex;
+  background: var(--color-surface);
+  border-top: 1px solid rgba(46, 35, 96, 0.08);
+  padding-bottom: var(--safe-bottom);
+}
+.nav-tab{
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0 8px;
+  color: var(--color-nav-inactive);
+}
+.nav-tab-icon svg{
+  width: 24px;
+  height: 24px;
+}
+.nav-tab-label{
+  font-size: 12px;
+  font-weight: 700;
+}
+.nav-tab.is-active{
+  color: var(--color-accent);
+}
