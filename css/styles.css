@@ -1,7 +1,7 @@
 /* ---------------------------------------------------
    TRACKER — Design-Tokens
    Alle Farben ausschließlich als CSS-Custom-Properties, damit eine künftige
-   13-settings.js sie zur Laufzeit überschreiben kann (siehe applyThemeVars()
+   09-settings.js sie zur Laufzeit überschreiben kann (siehe applyThemeVars()
    in 02-state-theme.js), ohne dass irgendwo Farbwerte hart im Markup/JS
    stehen. Defaults an der "Drip"-App angelehnt (dunkles Lila, mintiger
    Hintergrund, oranger Akzent, dezentes Pastellrot für Periodentage).
@@ -22,6 +22,17 @@
   --color-period-bg: #F5D0CB;
   --color-period-text: #7A3B34;
 
+  /* RGB-Tripel (ohne rgb()-Wrapper) für die Vorhersage-Ringe kommender Perioden-
+     tage im Kalender (04-calendar.js, Drip-Vorbild): gestrichelter Ring für die
+     Tage im Vorhersage-Fenster, durchgezogener Ring für den wahrscheinlichsten
+     Tag — siehe .day-cell.is-predicted-range / .is-predicted-peak weiter unten. */
+  --color-predicted-rgb: 214, 58, 58;
+
+  /* Farbe für den Schmerztag-Marker (langer Druck auf eine Tageszelle, siehe
+     handleDayLongPress() in 04-calendar.js) — bewusst eine eigene Farbe (Lila),
+     damit sie sich klar von Perioden-Rosa und Vorhersage-Rot abhebt. */
+  --color-pain: #8B6FD9;
+
   --color-selecting-outline: #F0923D;
 
   --color-nav-inactive: #9C9CA8;
@@ -29,6 +40,22 @@
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Dunkles Farbschema — aktiviert über data-theme="dark" auf <html> (siehe
+   applyColorScheme() in 02-state-theme.js). Akzent-/Markenfarbe sowie die
+   Vorhersage-Rot-Basis bleiben bewusst gleich, damit eine gewählte Akzentfarbe
+   (09-settings.js) bei Hell/Dunkel-Wechsel erhalten bleibt. */
+:root[data-theme="dark"]{
+  --color-header-bg: #241B3D;
+  --color-bg: #15131E;
+  --color-surface: #211F30;
+  --color-text-heading: #F1EFFB;
+  --color-text-day: #C9C7D6;
+  --color-text-muted: #96939F;
+  --color-period-bg: #4A2E2C;
+  --color-period-text: #F2B7AC;
+  --color-nav-inactive: #726F81;
 }
 
 *{ box-sizing: border-box; }
@@ -65,6 +92,8 @@ button{
   background: var(--color-header-bg);
 }
 .app-title{
+  padding: 0;
+  text-align: left;
   font-size: 26px;
   font-weight: 800;
   color: var(--color-brand);
@@ -103,33 +132,6 @@ button{
   font-size: 20px;
 }
 .header-spacer{ width: 32px; }
-
-/* ---------- Jahres-Pillenleiste ---------- */
-.year-nav{
-  flex: 0 0 auto;
-  display: flex;
-  gap: 8px;
-  padding: 10px 16px;
-  overflow-x: auto;
-  background: var(--color-surface);
-  border-bottom: 1px solid rgba(46, 35, 96, 0.08);
-}
-.year-nav.is-empty{
-  display: none;
-}
-.year-pill{
-  flex: 0 0 auto;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-heading);
-  background: var(--color-bg);
-}
-.year-pill.is-current-year{
-  background: var(--color-accent);
-  color: #FFFFFF;
-}
 
 /* ---------- Kalender (scrollbarer Bereich) ---------- */
 .calendar-scroll{
@@ -171,6 +173,7 @@ button{
   row-gap: 14px;
 }
 .day-cell{
+  position: relative;
   justify-self: center;
   width: 40px;
   height: 40px;
@@ -201,6 +204,25 @@ button{
   box-shadow: inset 0 0 0 2px var(--color-selecting-outline);
   font-weight: 700;
   color: var(--color-selecting-outline);
+}
+.day-cell.is-predicted-range{
+  border: 2px dashed rgb(var(--color-predicted-rgb));
+}
+.day-cell.is-predicted-peak{
+  border: 2px solid rgb(var(--color-predicted-rgb));
+  font-weight: 700;
+  color: rgb(var(--color-predicted-rgb));
+}
+.day-cell.is-pain::after{
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-pain);
 }
 
 /* ---------- Platzhalter (Chart/Stats) ---------- */
@@ -274,10 +296,14 @@ button{
   font-size: 13px;
   color: var(--color-text-muted);
 }
+/* Titel oben, Wert darunter (statt nebeneinander) — bei längeren Werten wie dem
+   Datumsbereich des fruchtbaren Fensters brach das nebeneinander sonst mitten im
+   Datum um. Gestapelt hat der Wert die volle Kartenbreite für sich. */
 .stats-section{
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   background: var(--color-surface);
   border-radius: 14px;
   padding: 14px 16px;
@@ -288,9 +314,10 @@ button{
   color: var(--color-text-muted);
 }
 .stats-section-value{
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--color-text-heading);
+  white-space: nowrap;
 }
 .stats-note{
   margin: 16px 4px 0;
@@ -373,6 +400,227 @@ button{
   font-size: 15px;
 }
 
+/* ---------- Chart ---------- */
+.chart-view-scroll{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 20px 32px;
+}
+.chart-card{
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 18px 16px;
+  margin-bottom: 16px;
+}
+.chart-card-header{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.chart-card-title{
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-text-heading);
+}
+.chart-card-avg{
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+.chart-card-subtitle{
+  margin: 4px 0 14px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.chart-scroll-x{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.chart-svg{ display: block; }
+.chart-value-label{
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--color-text-heading);
+}
+.chart-axis-label{
+  font-size: 10px;
+  fill: var(--color-text-muted);
+}
+.chart-avg-line{
+  stroke: var(--color-text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+.chart-clip-mark{
+  stroke: var(--color-surface);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* ---------- Einstellungen ---------- */
+.settings-scroll{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 20px 32px;
+}
+.settings-section{
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 18px 16px;
+  margin-bottom: 16px;
+}
+.settings-heading{
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text-heading);
+}
+.settings-label{
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+.settings-pill-row{
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.settings-pill{
+  flex: 1 1 0;
+  padding: 10px 0;
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-text-heading);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+.settings-pill.is-active{
+  background: var(--color-accent);
+  color: #FFFFFF;
+}
+.accent-swatch-row{
+  display: flex;
+  gap: 12px;
+}
+.accent-swatch{
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+.accent-swatch.is-active{
+  box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-text-heading);
+}
+.settings-text{
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+.settings-action-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 13px;
+  border-radius: 14px;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+.settings-action-btn--secondary{
+  background: var(--color-bg);
+  color: var(--color-text-heading);
+}
+.settings-date-row{
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.settings-date-field{
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.settings-date-field input[type="date"]{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-text-heading);
+  font-family: inherit;
+  font-size: 14px;
+  color-scheme: light dark;
+}
+.visibility-list{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.visibility-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-bg);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--color-text-heading);
+}
+.visibility-row-checkbox{
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: var(--color-accent);
+}
+
+/* Verhindert Textauswahl/Kontextmenü beim langen Drücken auf Stats-/Chart-Karten
+   (siehe attachLongPress()/wireVisibilityLongPress() in 02-state-theme.js). */
+[data-vis-id]{
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ---------- Sichtbarkeits-Toast (langer Druck auf Stats-/Chart-Karte) ---------- */
+.visibility-toast{
+  position: fixed;
+  left: 50%;
+  bottom: calc(78px + var(--safe-bottom));
+  transform: translateX(-50%);
+  background: var(--color-header-bg);
+  color: #FFFFFF;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  max-width: 88%;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  animation: visibilityToastIn 0.2s ease forwards, visibilityToastOut 0.3s ease 2.2s forwards;
+}
+@keyframes visibilityToastIn{
+  from{ opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to{ opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes visibilityToastOut{
+  to{ opacity: 0; }
+}
+
 /* ---------- Bottom-Nav ---------- */
 .bottom-nav{
   flex: 0 0 auto;
@@ -400,4 +648,59 @@ button{
 }
 .nav-tab.is-active{
   color: var(--color-accent);
+}
+
+/* ---------- PDF-Bericht (Einstellungen -> Bericht) ----------
+   #printReportRoot liegt außerhalb von #app und ist normal unsichtbar; erst im
+   Druckdialog (window.print(), siehe handleGenerateReport() in 09-settings.js)
+   wird die App ausgeblendet und nur der Report gezeigt — "Als PDF speichern"
+   im Druckdialog erzeugt daraus eine echte PDF-Datei, ganz ohne PDF-Bibliothek. */
+#printReportRoot{
+  display: none;
+}
+@media print{
+  #app{ display: none !important; }
+  #printReportRoot{
+    display: block !important;
+    padding: 24px;
+    background: #FFFFFF;
+    color: #1A1A1A;
+    font-family: var(--font-family);
+  }
+  #printReportRoot h1{
+    margin: 0 0 4px;
+    font-size: 22px;
+  }
+  #printReportRoot h2{
+    margin: 22px 0 8px;
+    font-size: 15px;
+  }
+  #printReportRoot .report-meta{
+    margin: 0 0 4px;
+    font-size: 12px;
+    color: #555555;
+  }
+  #printReportRoot .report-summary-list{
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+  }
+  #printReportRoot svg{
+    max-width: 100%;
+    height: auto;
+  }
+  #printReportRoot .chart-value-label{ fill: #1A1A1A; }
+  #printReportRoot .chart-axis-label{ fill: #555555; }
+  #printReportRoot .chart-avg-line{ stroke: #999999; }
+  #printReportRoot .report-table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  #printReportRoot .report-table th,
+  #printReportRoot .report-table td{
+    border: 1px solid #CCCCCC;
+    padding: 5px 8px;
+    text-align: left;
+  }
 }
