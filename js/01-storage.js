@@ -48,52 +48,6 @@ function deletePeriodEntry(periodId) {
   return periods;
 }
 
-/** Aktualisiert eine bestehende Periode (z.B. neues Enddatum beim nachträglichen
-    Verlängern per Klick, siehe findExtendablePeriod()/handleDayClick() in
-    04-calendar.js) statt sie zu löschen und neu anzulegen. */
-function updatePeriodEntry(periodId, updates) {
-  const periods = loadPeriods();
-  const idx = periods.findIndex(p => p.id === periodId);
-  if (idx === -1) return periods;
-  periods[idx] = { ...periods[idx], ...updates };
-  periods.sort((a, b) => a.start.localeCompare(b.start));
-  savePeriods(periods);
-  return periods;
-}
-
-function loadPainDays(){
-  try {
-    const raw = localStorage.getItem(APP_DATA.STORAGE_KEYS.PAIN_DAYS);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error('[storage] Schmerztage konnten nicht geladen werden:', err);
-    return [];
-  }
-}
-
-function savePainDays(painDays){
-  try {
-    localStorage.setItem(APP_DATA.STORAGE_KEYS.PAIN_DAYS, JSON.stringify(painDays));
-    return true;
-  } catch (err) {
-    console.error('[storage] Schmerztage konnten nicht gespeichert werden:', err);
-    return false;
-  }
-}
-
-/** Schaltet den Schmerztag-Status für ein Datum um (langer Druck auf eine
-    Tageszelle, siehe handleDayLongPress() in 04-calendar.js). */
-function togglePainDay(iso){
-  const painDays = loadPainDays();
-  const idx = painDays.indexOf(iso);
-  if (idx === -1) painDays.push(iso);
-  else painDays.splice(idx, 1);
-  painDays.sort();
-  savePainDays(painDays);
-  return painDays;
-}
-
 function loadThemeOverrides() {
   try {
     const raw = localStorage.getItem(APP_DATA.STORAGE_KEYS.THEME);
@@ -114,26 +68,6 @@ function saveThemeOverrides(overrides) {
   }
 }
 
-function loadSettings(){
-  try {
-    const raw = localStorage.getItem(APP_DATA.STORAGE_KEYS.SETTINGS);
-    return raw ? JSON.parse(raw) : {};
-  } catch (err) {
-    console.error('[storage] Einstellungen konnten nicht geladen werden:', err);
-    return {};
-  }
-}
-
-function saveSettings(settings){
-  try {
-    localStorage.setItem(APP_DATA.STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-    return true;
-  } catch (err) {
-    console.error('[storage] Einstellungen konnten nicht gespeichert werden:', err);
-    return false;
-  }
-}
-
 /**
  * Backup-Export als JSON-Objekt (Basis für 11-export-report.js, sobald es existiert).
  * Wichtig, da es kein Backend gibt und ein Cache-Reset sonst Datenverlust bedeutet.
@@ -143,8 +77,7 @@ function exportAllData() {
     exportedAt: new Date().toISOString(),
     version: APP_DATA.APP_VERSION,
     periods: loadPeriods(),
-    theme: loadThemeOverrides(),
-    painDays: loadPainDays()
+    theme: loadThemeOverrides()
   };
 }
 
@@ -154,6 +87,5 @@ function importAllData(data) {
   }
   savePeriods(data.periods);
   if (data.theme) saveThemeOverrides(data.theme);
-  if (Array.isArray(data.painDays)) savePainDays(data.painDays);
   return true;
 }

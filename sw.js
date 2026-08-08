@@ -1,7 +1,7 @@
 /* ---------------------------------------------------
    SERVICE WORKER — Cache-First
    Bei jeder inhaltlichen Änderung an einer der unten gelisteten Dateien
-   CACHE_NAME hochzählen (z.B. 'tracker-cache-v7'), sonst liefert der
+   CACHE_NAME hochzählen (z.B. 'tracker-cache-v2'), sonst liefert der
    Service Worker Nutzer:innen weiterhin die alte, gecachte Fassung aus.
    Zum Testen von Änderungen daher immer ein Inkognito-/privates Fenster
    verwenden, um die Cache-Falle beim normalen Neuladen zu umgehen.
@@ -18,14 +18,13 @@ const APP_SHELL = [
   './js/data/app-data.js',
   './js/01-storage.js',
   './js/02-state-theme.js',
-  './js/03-utils.js',
-  './js/04-calendar.js',
-  './js/05-navigation.js',
-  './js/06-import.js',
-  './js/07-chart.js',
-  './js/08-stats-progress.js',
-  './js/09-settings.js',
-  './js/10-app-init.js',
+  './js/04-utils.js',
+  './js/05-calendar.js',
+  './js/06-navigation.js',
+  './js/07-import.js',
+  './js/09-stats-progress.js',
+  './js/13-settings.js',
+  './js/14-app-init.js',
   './icons/icon192.png',
   './icons/icon512.png',
   './icons/appletouchicon.png',

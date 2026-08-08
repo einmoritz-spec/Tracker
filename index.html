@@ -24,20 +24,19 @@
   Klassische <script>-Tags ohne "defer"/"type=module": alle Dateien teilen
   sich einen globalen Scope, spätere Dateien greifen direkt auf Funktionen/
   Variablen früherer Dateien zu. Die Ladereihenfolge ist deshalb verbindlich
-  und entspricht durchgängig der Nummerierung 01–10 (js/data/app-data.js läuft
-  bewusst unnummeriert davor, da es reine Konstanten ohne Logik enthält).
+  und entspricht der Nummerierung 01–14 (Lücken = noch nicht angelegte
+  Module für Chart/Stats-Detailinhalte, siehe TODO in 06-navigation.js).
 -->
 <script src="js/data/app-data.js"></script>
 <script src="js/01-storage.js"></script>
 <script src="js/02-state-theme.js"></script>
-<script src="js/03-utils.js"></script>
-<script src="js/04-calendar.js"></script>
-<script src="js/05-navigation.js"></script>
-<script src="js/06-import.js"></script>
-<script src="js/07-chart.js"></script>
-<script src="js/08-stats-progress.js"></script>
-<script src="js/09-settings.js"></script>
-<script src="js/10-app-init.js"></script>
+<script src="js/04-utils.js"></script>
+<script src="js/05-calendar.js"></script>
+<script src="js/06-navigation.js"></script>
+<script src="js/07-import.js"></script>
+<script src="js/09-stats-progress.js"></script>
+<script src="js/13-settings.js"></script>
+<script src="js/14-app-init.js"></script>
 
 <script>
 if ('serviceWorker' in navigator) {

@@ -15,11 +15,10 @@ const APP_DATA = {
   STORAGE_KEYS: {
     PERIODS: 'tracker_periods_v1',
     THEME: 'tracker_theme_v1',
-    SETTINGS: 'tracker_settings_v1',
-    PAIN_DAYS: 'tracker_pain_days_v1'
+    SETTINGS: 'tracker_settings_v1'
   },
 
-  // Zyklus-Defaults für die spätere Vorhersage-Engine (03-utils.js)
+  // Zyklus-Defaults für die spätere Vorhersage-Engine (04-utils.js)
   CYCLE_DEFAULTS: {
     AVERAGE_CYCLE_LENGTH: 28,   // Tage zwischen zwei Periodenstarts
     AVERAGE_PERIOD_LENGTH: 5,   // Tage Regelblutung
@@ -37,55 +36,97 @@ const APP_DATA = {
     NAV_CHART: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 8 10 12 14 16 6 21 11"></polyline><line x1="3" y1="21" x2="21" y2="21"></line></svg>',
     NAV_STATS: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 3 v9 h9"></path></svg>',
     IMPORT: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 21h16"></path></svg>',
-    SETTINGS: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg>'
+    SETTINGS: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
   },
 
-  // Auswahl an Akzentfarben für die Design-Sektion in 09-settings.js. Der erste
-  // Eintrag entspricht dem Default aus THEME_DEFAULTS weiter unten.
-  THEME_ACCENT_PRESETS: [
-    { name: 'Orange', value: '#F0923D' },
-    { name: 'Pink', value: '#E85D75' },
-    { name: 'Blau', value: '#4A90D9' },
-    { name: 'Grün', value: '#4CAF7D' },
-    { name: 'Lila', value: '#8B6FD9' }
+  // Auswählbare Farbthemen (13-settings.js). Jedes Theme liefert ALLE themefähigen
+  // CSS-Variablen (siehe :root in css/styles.css) — ausgewählte Werte werden 1:1 als
+  // Overrides gespeichert (01-storage.js) und über applyThemeVars() (02-state-theme.js)
+  // gesetzt. Gemeinsame Idee aller Themes: ruhige, entsättigte Erdtöne statt der alten
+  // knalligen Lila/Mint/Orange-Kombination — nichts soll "laut" wirken.
+  // 'sand' ist das Standard-Theme (siehe DEFAULT_THEME_ID unten und :root-Defaults
+  // in css/styles.css, die bewusst mit den sand-Werten übereinstimmen).
+  THEME_PRESETS: [
+    {
+      id: 'sand',
+      name: 'Sand',
+      swatch: ['#C97B4A', '#F2E9DE', '#6B5744'],
+      vars: {
+        '--color-header-bg': '#6B5744',
+        '--color-header-text': '#FBF6F0',
+        '--color-brand': '#D9A679',
+        '--color-bg': '#F2E9DE',
+        '--color-surface': '#FBF6F0',
+        '--color-accent': '#C97B4A',
+        '--color-text-heading': '#4A3B2E',
+        '--color-text-day': '#6B5D4F',
+        '--color-text-muted': '#A79484',
+        '--color-period-bg': '#E8C9B8',
+        '--color-period-text': '#7A4A34',
+        '--color-selecting-outline': '#C97B4A',
+        '--color-nav-inactive': '#B8AA9A'
+      }
+    },
+    {
+      id: 'wald',
+      name: 'Wald',
+      swatch: ['#7A8F5C', '#EDF0E6', '#2F3B2A'],
+      vars: {
+        '--color-header-bg': '#2F3B2A',
+        '--color-header-text': '#EDF0E6',
+        '--color-brand': '#9CB68A',
+        '--color-bg': '#EDF0E6',
+        '--color-surface': '#FFFFFF',
+        '--color-accent': '#7A8F5C',
+        '--color-text-heading': '#2F3B2A',
+        '--color-text-day': '#4C5645',
+        '--color-text-muted': '#8B9483',
+        '--color-period-bg': '#D8C9A3',
+        '--color-period-text': '#6B5233',
+        '--color-selecting-outline': '#7A8F5C',
+        '--color-nav-inactive': '#A8AE9F'
+      }
+    },
+    {
+      id: 'ton',
+      name: 'Ton',
+      swatch: ['#B5583A', '#F5E6DA', '#5C3A2E'],
+      vars: {
+        '--color-header-bg': '#5C3A2E',
+        '--color-header-text': '#F5E6DA',
+        '--color-brand': '#E3A87C',
+        '--color-bg': '#F5E6DA',
+        '--color-surface': '#FFFBF7',
+        '--color-accent': '#B5583A',
+        '--color-text-heading': '#4A2E22',
+        '--color-text-day': '#6E5347',
+        '--color-text-muted': '#A6897B',
+        '--color-period-bg': '#EAC5B8',
+        '--color-period-text': '#7A3C2A',
+        '--color-selecting-outline': '#B5583A',
+        '--color-nav-inactive': '#C2AA9C'
+      }
+    },
+    {
+      id: 'stein',
+      name: 'Stein',
+      swatch: ['#9C8768', '#EDEAE3', '#4B4A45'],
+      vars: {
+        '--color-header-bg': '#4B4A45',
+        '--color-header-text': '#FAF9F6',
+        '--color-brand': '#BFAF9A',
+        '--color-bg': '#EDEAE3',
+        '--color-surface': '#FAF9F6',
+        '--color-accent': '#9C8768',
+        '--color-text-heading': '#3C3A35',
+        '--color-text-day': '#5C594F',
+        '--color-text-muted': '#96917F',
+        '--color-period-bg': '#DCCFC0',
+        '--color-period-text': '#6E5A44',
+        '--color-selecting-outline': '#9C8768',
+        '--color-nav-inactive': '#B1AC9E'
+      }
+    }
   ],
-
-  // Standard-Farbwerte (Referenzwerte für 09-settings.js, sobald es existiert).
-  // Die tatsächlich wirksamen Werte liegen als CSS-Variablen in css/styles.css.
-  // Diese Kopie hier dient nur als Fallback/Reset-Referenz für die künftige
-  // Farb-Anpassung durch den Nutzer.
-  THEME_DEFAULTS: {
-    '--color-header-bg': '#3C2E6B',
-    '--color-header-text': '#FFFFFF',
-    '--color-brand': '#5FD6C0',
-    '--color-bg': '#E9F2EA',
-    '--color-accent': '#F0923D',
-    '--color-text-heading': '#2E2360',
-    '--color-text-day': '#4B4B55',
-    '--color-period-bg': '#F5D0CB',
-    '--color-period-text': '#7A3B34',
-    '--color-predicted-rgb': '214, 58, 58',
-    '--color-pain': '#8B6FD9',
-    '--color-selecting-outline': '#F0923D'
-  },
-
-  // Zentrale Liste aller Stats-/Chart-Elemente, die per langem Druck ausgeblendet
-  // werden können (siehe hideItem()/showItem() in 02-state-theme.js). Jede id
-  // taucht als data-vis-id im jeweiligen Karten-Markup auf (08-stats-progress.js,
-  // 07-chart.js) UND als Zeile in der "Sichtbare Bereiche"-Liste in den
-  // Einstellungen (09-settings.js) — eine Quelle für beide Stellen, damit nichts
-  // auseinanderlaufen kann.
-  VISIBILITY_ITEMS: [
-    { id: 'stat-avgCycle', label: 'Ø Zykluslänge (Stats)' },
-    { id: 'stat-avgPeriod', label: 'Ø Periodendauer (Stats)' },
-    { id: 'stat-regularity', label: 'Regelmäßigkeit (Stats)' },
-    { id: 'stat-lastPeriod', label: 'Letzte Periode (Stats)' },
-    { id: 'stat-nextPeriod', label: 'Nächste Periode (Stats)' },
-    { id: 'stat-fertileWindow', label: 'Fruchtbares Fenster (Stats)' },
-    { id: 'stat-ovulation', label: 'Geschätzter Eisprung (Stats)' },
-    { id: 'stat-painTotal', label: 'Schmerztage insgesamt (Stats)' },
-    { id: 'chart-periodLength', label: 'Periodendauer-Diagramm (Chart)' },
-    { id: 'chart-cycleLength', label: 'Zykluslängen-Diagramm (Chart)' },
-    { id: 'chart-painPhase', label: 'Schmerztage-nach-Phase-Diagramm (Chart)' }
-  ]
+  DEFAULT_THEME_ID: 'sand'
 };
