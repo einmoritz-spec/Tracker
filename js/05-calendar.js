@@ -230,10 +230,7 @@ function renderCalendarView(){
   app.innerHTML = `
     <header class="app-header app-header-row">
       <span class="app-title">${APP_DATA.APP_NAME}</span>
-      <span class="header-icon-group">
-        <button type="button" class="header-icon-btn" id="settingsBtn" aria-label="Einstellungen">${APP_DATA.ICONS.SETTINGS}</button>
-        <button type="button" class="header-icon-btn" id="importBtn" aria-label="Aus Drip importieren">${APP_DATA.ICONS.IMPORT}</button>
-      </span>
+      <button type="button" class="header-icon-btn" id="settingsBtn" aria-label="Einstellungen">${APP_DATA.ICONS.SETTINGS}</button>
     </header>
     <div class="year-nav is-empty" id="yearNav"></div>
     <div class="calendar-scroll" id="calendarScroll">
@@ -243,7 +240,6 @@ function renderCalendarView(){
     </div>
     ${bottomNavHTML('calendar')}
   `;
-  document.getElementById('importBtn').onclick = () => goImport();
   document.getElementById('settingsBtn').onclick = () => goSettings();
 
   // Zustand VOR dem HTML-Aufbau zurücksetzen: monthBlockHTML() liest

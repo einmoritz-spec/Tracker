@@ -6,7 +6,7 @@
    Zum Testen von Änderungen daher immer ein Inkognito-/privates Fenster
    verwenden, um die Cache-Falle beim normalen Neuladen zu umgehen.
 --------------------------------------------------- */
-const CACHE_NAME = 'tracker-cache-v6';
+const CACHE_NAME = 'tracker-cache-v7';
 
 // Relative Pfade (kein führendes "/"), damit es auch unter einem
 // GitHub-Pages-Projektpfad (z.B. /reponame/) funktioniert.

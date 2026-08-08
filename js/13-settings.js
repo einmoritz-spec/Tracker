@@ -10,17 +10,31 @@
    damit beim nächsten Öffnen der Einstellungen erkennbar ist, welches
    Theme aktuell aktiv ist (applyThemeVars() in 02-state-theme.js ignoriert
    dieses Feld ohnehin, da es nicht mit "--" beginnt).
-   Zusätzlich: ein Farbwähler (Rad + Helligkeit + Hex-Eingabe + Farbharmonie-
-   Vorschläge) für eine frei wählbare Akzentfarbe. Der Wähler ändert NICHT
-   das komplette Theme, sondern übernimmt nur --color-accent/--color-
-   selecting-outline über die aktuell aktiven Overrides hinweg (siehe
-   applyCustomAccent()) — Header, Hintergrund etc. bleiben vom gewählten
-   Theme-Preset bestimmt.
+
+   Zusätzlich: ein Farbwähler für eine frei wählbare Akzentfarbe, aufgeteilt
+   in zwei Canvases (Ring außen = Farbton, Kreisfeld mittig = Sättigung/
+   Helligkeit) statt einer einzelnen Scheibe — damit Farbton UND Intensität
+   auf einen Blick getrennt bedienbar sind. Der Wähler ändert NICHT das
+   komplette Theme, sondern übernimmt nur --color-accent/--color-selecting-
+   outline über die aktuell aktiven Overrides hinweg (siehe applyCustomAccent())
+   — Header, Hintergrund etc. bleiben vom gewählten Theme-Preset bestimmt.
+
+   Der Drip-Import-Einstieg (07-import.js) sitzt hier als Listenpunkt statt
+   als Dauer-Icon im Kalender-Header, da er nur sehr selten (einmalig beim
+   Umstieg von Drip) gebraucht wird.
 --------------------------------------------------- */
 
-// Laufender Zustand des Farbrads, ausschließlich für die Picker-UI in dieser
-// Datei — kein State.*, da rein UI-lokal und nicht persistenzrelevant, bis
-// "Übernehmen" gedrückt wird.
+// Geometrie des Farbwählers: Ring außen (Farbton) + Kreisfeld mittig
+// (Sättigung horizontal / Helligkeit vertikal). Als Konstanten, da sowohl
+// beim Zeichnen als auch beim Positionieren der Punkte gebraucht.
+const ACCENT_RING_SIZE = 240;
+const ACCENT_RING_THICKNESS = 34;
+const ACCENT_FIELD_SIZE = 164;
+const ACCENT_FIELD_OFFSET = (ACCENT_RING_SIZE - ACCENT_FIELD_SIZE) / 2;
+
+// Laufender Zustand des Farbwählers, ausschließlich für die Picker-UI in
+// dieser Datei — kein State.*, da rein UI-lokal und nicht persistenzrelevant,
+// bis "Übernehmen" gedrückt wird.
 let pickerHue = 350;   // 0–360
 let pickerSat = 60;    // 0–100
 let pickerLight = 55;  // 0–100
@@ -68,25 +82,55 @@ function hexToHsl(hex){
   return { h, s: s * 100, l: l * 100 };
 }
 
-/** Zeichnet das Farbrad (Winkel = Farbton, Abstand vom Zentrum = Sättigung)
-    für eine feste Helligkeit direkt pixelweise auf den Canvas. */
-function drawColorWheel(canvas, lightness){
+/** Äußerer Ring: reiner Farbton (volle Sättigung, mittlere Helligkeit) über
+    360°, unabhängig vom aktuellen Auswahlzustand — wird nur EINMAL gezeichnet. */
+function drawHueRing(canvas){
   const size = canvas.width;
   const ctx = canvas.getContext('2d');
-  const radius = size / 2;
+  const center = size / 2;
+  const outerR = center;
+  const innerR = center - ACCENT_RING_THICKNESS;
   const imageData = ctx.createImageData(size, size);
   for (let y = 0; y < size; y++){
     for (let x = 0; x < size; x++){
-      const dx = x - radius, dy = y - radius;
+      const dx = x - center, dy = y - center;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const idx = (y * size + x) * 4;
-      if (dist > radius){
+      if (dist > outerR || dist < innerR){
         imageData.data[idx + 3] = 0;
         continue;
       }
       const hue = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
-      const sat = clamp((dist / radius) * 100, 0, 100);
-      const [r, g, b] = hslToRgbBytes(hue, sat, lightness);
+      const [r, g, b] = hslToRgbBytes(hue, 100, 50);
+      imageData.data[idx] = r;
+      imageData.data[idx + 1] = g;
+      imageData.data[idx + 2] = b;
+      imageData.data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
+
+/** Mittleres Kreisfeld: Sättigung (horizontal) × Helligkeit (vertikal) für
+    den aktuell gewählten Farbton — wird bei jedem Farbton-Wechsel neu
+    gezeichnet, da sich hier die komplette Fläche farblich ändert. */
+function drawSatLightField(canvas, hue){
+  const size = canvas.width;
+  const ctx = canvas.getContext('2d');
+  const center = size / 2;
+  const imageData = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++){
+    for (let x = 0; x < size; x++){
+      const dx = x - center, dy = y - center;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const idx = (y * size + x) * 4;
+      if (dist > center){
+        imageData.data[idx + 3] = 0;
+        continue;
+      }
+      const sat = (x / size) * 100;
+      const light = 100 - (y / size) * 100;
+      const [r, g, b] = hslToRgbBytes(hue, sat, light);
       imageData.data[idx] = r;
       imageData.data[idx + 1] = g;
       imageData.data[idx + 2] = b;
@@ -188,25 +232,41 @@ function wireSettingsView(){
     };
   });
 
+  document.getElementById('settingsImportBtn').onclick = () => goImport();
+
   wireAccentPicker();
 }
 
 function wireAccentPicker(){
-  const canvas = document.getElementById('accentWheelCanvas');
-  const dot = document.getElementById('accentWheelDot');
+  const ringCanvas = document.getElementById('hueRingCanvas');
+  const fieldCanvas = document.getElementById('satLightCanvas');
+  const hueDot = document.getElementById('hueRingDot');
+  const fieldDot = document.getElementById('satLightDot');
   const hexInput = document.getElementById('accentHexInput');
-  const lightnessInput = document.getElementById('accentLightness');
   const swatch = document.getElementById('accentPreviewSwatch');
-  let dragging = false;
 
   function updatePickerPreview(){
     const hex = hslToHex(pickerHue, pickerSat, pickerLight);
-    const radius = canvas.width / 2;
-    const dist = (pickerSat / 100) * radius;
+
+    const wrapCenter = ACCENT_RING_SIZE / 2;
+    const ringDotRadius = wrapCenter - ACCENT_RING_THICKNESS / 2;
     const rad = pickerHue * Math.PI / 180;
-    dot.style.left = (radius + dist * Math.cos(rad)) + 'px';
-    dot.style.top = (radius + dist * Math.sin(rad)) + 'px';
-    dot.style.background = hex;
+    hueDot.style.left = (wrapCenter + ringDotRadius * Math.cos(rad)) + 'px';
+    hueDot.style.top = (wrapCenter + ringDotRadius * Math.sin(rad)) + 'px';
+    hueDot.style.background = hslToHex(pickerHue, 100, 50);
+
+    const fieldCenter = ACCENT_FIELD_SIZE / 2;
+    let fx = (pickerSat / 100) * ACCENT_FIELD_SIZE - fieldCenter;
+    let fy = (1 - pickerLight / 100) * ACCENT_FIELD_SIZE - fieldCenter;
+    const fDist = Math.sqrt(fx * fx + fy * fy);
+    if (fDist > fieldCenter){
+      const scale = fieldCenter / fDist;
+      fx *= scale; fy *= scale;
+    }
+    fieldDot.style.left = (ACCENT_FIELD_OFFSET + fieldCenter + fx) + 'px';
+    fieldDot.style.top = (ACCENT_FIELD_OFFSET + fieldCenter + fy) + 'px';
+    fieldDot.style.background = hex;
+
     swatch.style.background = hex;
     hexInput.value = hex;
   }
@@ -219,8 +279,7 @@ function wireAccentPicker(){
         const hsl = hexToHsl(swatchBtn.dataset.hex);
         if (!hsl) return;
         pickerHue = hsl.h; pickerSat = hsl.s; pickerLight = hsl.l;
-        lightnessInput.value = Math.round(pickerLight);
-        drawColorWheel(canvas, pickerLight);
+        drawSatLightField(fieldCanvas, pickerHue);
         renderGuidePalettes();
         updatePickerPreview();
       };
@@ -235,35 +294,48 @@ function wireAccentPicker(){
     fillGuideRow('guideTriadic', palettes.triadic);
   }
 
-  function setFromPointer(evt){
-    const rect = canvas.getBoundingClientRect();
+  function setHueFromPointer(evt){
+    const rect = ringCanvas.getBoundingClientRect();
     const cx = rect.width / 2, cy = rect.height / 2;
     const dx = (evt.clientX - rect.left) - cx;
     const dy = (evt.clientY - rect.top) - cy;
-    const dist = Math.min(Math.sqrt(dx * dx + dy * dy), cx);
     pickerHue = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
-    pickerSat = clamp((dist / cx) * 100, 0, 100);
+    drawSatLightField(fieldCanvas, pickerHue);
     updatePickerPreview();
   }
 
-  canvas.onpointerdown = (e) => { dragging = true; canvas.setPointerCapture(e.pointerId); setFromPointer(e); };
-  canvas.onpointermove = (e) => { if (dragging) setFromPointer(e); };
-  canvas.onpointerup = () => { dragging = false; renderGuidePalettes(); };
-  canvas.onpointercancel = () => { dragging = false; };
-
-  lightnessInput.oninput = () => {
-    pickerLight = Number(lightnessInput.value);
-    drawColorWheel(canvas, pickerLight);
+  function setSatLightFromPointer(evt){
+    const rect = fieldCanvas.getBoundingClientRect();
+    const cx = rect.width / 2, cy = rect.height / 2;
+    let dx = (evt.clientX - rect.left) - cx;
+    let dy = (evt.clientY - rect.top) - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > cx){
+      const scale = cx / dist;
+      dx *= scale; dy *= scale;
+    }
+    pickerSat = clamp(((dx + cx) / rect.width) * 100, 0, 100);
+    pickerLight = clamp(100 - ((dy + cy) / rect.height) * 100, 0, 100);
     updatePickerPreview();
-  };
-  lightnessInput.onchange = () => renderGuidePalettes();
+  }
+
+  let draggingRing = false;
+  ringCanvas.onpointerdown = (e) => { draggingRing = true; ringCanvas.setPointerCapture(e.pointerId); setHueFromPointer(e); };
+  ringCanvas.onpointermove = (e) => { if (draggingRing) setHueFromPointer(e); };
+  ringCanvas.onpointerup = () => { draggingRing = false; renderGuidePalettes(); };
+  ringCanvas.onpointercancel = () => { draggingRing = false; };
+
+  let draggingField = false;
+  fieldCanvas.onpointerdown = (e) => { draggingField = true; fieldCanvas.setPointerCapture(e.pointerId); setSatLightFromPointer(e); };
+  fieldCanvas.onpointermove = (e) => { if (draggingField) setSatLightFromPointer(e); };
+  fieldCanvas.onpointerup = () => { draggingField = false; renderGuidePalettes(); };
+  fieldCanvas.onpointercancel = () => { draggingField = false; };
 
   hexInput.onchange = () => {
     const hsl = hexToHsl(hexInput.value);
     if (!hsl){ updatePickerPreview(); return; }
     pickerHue = hsl.h; pickerSat = hsl.s; pickerLight = hsl.l;
-    lightnessInput.value = Math.round(pickerLight);
-    drawColorWheel(canvas, pickerLight);
+    drawSatLightField(fieldCanvas, pickerHue);
     renderGuidePalettes();
     updatePickerPreview();
   };
@@ -272,8 +344,7 @@ function wireAccentPicker(){
     pickerHue = Math.random() * 360;
     pickerSat = 45 + Math.random() * 45;
     pickerLight = 40 + Math.random() * 30;
-    lightnessInput.value = Math.round(pickerLight);
-    drawColorWheel(canvas, pickerLight);
+    drawSatLightField(fieldCanvas, pickerHue);
     renderGuidePalettes();
     updatePickerPreview();
   };
@@ -283,7 +354,8 @@ function wireAccentPicker(){
     renderSettingsView();
   };
 
-  drawColorWheel(canvas, pickerLight);
+  drawHueRing(ringCanvas);
+  drawSatLightField(fieldCanvas, pickerHue);
   renderGuidePalettes();
   updatePickerPreview();
 }
@@ -306,14 +378,11 @@ function renderSettingsView(){
 
       <p class="settings-section-label settings-section-label-tight">Akzentfarbe anpassen</p>
       <div class="accent-picker">
-        <div class="color-wheel-wrap">
-          <canvas id="accentWheelCanvas" width="220" height="220"></canvas>
-          <span class="color-wheel-dot" id="accentWheelDot"></span>
-        </div>
-        <div class="lightness-row">
-          <span class="lightness-label">Hell</span>
-          <input type="range" id="accentLightness" min="10" max="90" value="${Math.round(pickerLight)}">
-          <span class="lightness-label">Dunkel</span>
+        <div class="color-wheel-wrap" style="width:${ACCENT_RING_SIZE}px;height:${ACCENT_RING_SIZE}px;">
+          <canvas id="hueRingCanvas" width="${ACCENT_RING_SIZE}" height="${ACCENT_RING_SIZE}"></canvas>
+          <span class="hue-ring-dot" id="hueRingDot"></span>
+          <canvas id="satLightCanvas" width="${ACCENT_FIELD_SIZE}" height="${ACCENT_FIELD_SIZE}" style="top:${ACCENT_FIELD_OFFSET}px;left:${ACCENT_FIELD_OFFSET}px;"></canvas>
+          <span class="sat-light-dot" id="satLightDot"></span>
         </div>
         <div class="accent-preview-row">
           <span class="accent-preview-swatch" id="accentPreviewSwatch"></span>
@@ -340,6 +409,13 @@ function renderSettingsView(){
 
         <button type="button" class="import-confirm-btn" id="accentApplyBtn">Akzentfarbe übernehmen</button>
       </div>
+
+      <p class="settings-section-label settings-section-label-tight">Daten</p>
+      <button type="button" class="settings-link-row" id="settingsImportBtn">
+        <span class="settings-link-icon">${APP_DATA.ICONS.IMPORT}</span>
+        <span class="settings-link-label">Aus Drip importieren</span>
+        <span class="settings-link-chevron">›</span>
+      </button>
     </div>
   `;
   wireSettingsView();

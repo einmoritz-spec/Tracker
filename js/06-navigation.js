@@ -15,9 +15,8 @@ function replaceView(view){
 
 function bottomNavHTML(active){
   const tab = (id, label, icon) => `
-    <button type="button" class="nav-tab${active === id ? ' is-active' : ''}" data-tab="${id}">
+    <button type="button" class="nav-tab${active === id ? ' is-active' : ''}" data-tab="${id}" aria-label="${label}">
       <span class="nav-tab-icon">${icon}</span>
-      <span class="nav-tab-label">${label}</span>
     </button>
   `;
   return `

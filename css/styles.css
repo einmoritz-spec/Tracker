@@ -79,11 +79,6 @@ button{
   align-items: center;
   justify-content: space-between;
 }
-.header-icon-group{
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 .header-icon-btn{
   display: flex;
   align-items: center;
@@ -453,41 +448,33 @@ button{
 }
 .color-wheel-wrap{
   position: relative;
-  width: 220px;
-  height: 220px;
-  margin: 0 auto 18px;
+  margin: 0 auto 20px;
   touch-action: none;
 }
 .color-wheel-wrap canvas{
-  width: 220px;
-  height: 220px;
+  position: absolute;
+  top: 0;
+  left: 0;
   border-radius: 50%;
   display: block;
 }
-.color-wheel-dot{
+.hue-ring-dot,
+.sat-light-dot{
   position: absolute;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
   border-radius: 50%;
   border: 3px solid #FFFFFF;
   box-shadow: 0 1px 5px rgba(0,0,0,0.35);
   pointer-events: none;
 }
-.lightness-row{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+.hue-ring-dot{
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
 }
-.lightness-label{
-  flex: 0 0 auto;
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-.lightness-row input[type="range"]{
-  flex: 1 1 auto;
-  accent-color: var(--color-accent);
+.sat-light-dot{
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
 }
 .accent-preview-row{
   display: flex;
@@ -542,6 +529,36 @@ button{
   margin-top: 8px;
 }
 
+/* ---------- Einstellungen: Link-Zeile (z.B. Drip-Import) ---------- */
+.settings-link-row{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.settings-link-icon{
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: var(--color-accent);
+}
+.settings-link-icon svg{ width: 22px; height: 22px; }
+.settings-link-label{
+  flex: 1 1 auto;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+}
+.settings-link-chevron{
+  flex: 0 0 auto;
+  font-size: 20px;
+  color: var(--color-text-muted);
+}
+
 /* ---------- Bottom-Nav ---------- */
 .bottom-nav{
   flex: 0 0 auto;
@@ -553,19 +570,14 @@ button{
 .nav-tab{
   flex: 1 1 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 0 8px;
+  justify-content: center;
+  padding: 14px 0 12px;
   color: var(--color-nav-inactive);
 }
 .nav-tab-icon svg{
-  width: 24px;
-  height: 24px;
-}
-.nav-tab-label{
-  font-size: 12px;
-  font-weight: 700;
+  width: 30px;
+  height: 30px;
 }
 .nav-tab.is-active{
   color: var(--color-accent);
